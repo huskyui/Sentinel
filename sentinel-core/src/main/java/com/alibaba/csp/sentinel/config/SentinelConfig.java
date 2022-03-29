@@ -71,7 +71,9 @@ public final class SentinelConfig {
 
     static {
         try {
+            // 初始化配置
             initialize();
+            // 初始化property
             loadProps();
             resolveAppName();
             resolveAppType();

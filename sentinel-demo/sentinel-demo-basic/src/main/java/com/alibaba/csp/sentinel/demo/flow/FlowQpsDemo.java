@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.alibaba.csp.sentinel.property.DynamicSentinelProperty;
 import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
@@ -47,8 +48,11 @@ public class FlowQpsDemo {
     private static int seconds = 60 + 40;
 
     public static void main(String[] args) throws Exception {
+        // 初始化 流控规则
         initFlowQpsRule();
 
+        // 实时打印 运行seconds秒数，print total ,print pass,print block
+        // 定时流控的数据
         tick();
         // first make the system run on a very low condition
         simulateTraffic();
@@ -61,12 +65,16 @@ public class FlowQpsDemo {
     private static void initFlowQpsRule() {
         List<FlowRule> rules = new ArrayList<FlowRule>();
         FlowRule rule1 = new FlowRule();
+        // resourceName
         rule1.setResource(KEY);
         // set limit qps to 20
         rule1.setCount(20);
+        // 流量控制有两种模式， 0 线程数  1 qps
         rule1.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        // set origin app name
         rule1.setLimitApp("default");
         rules.add(rule1);
+        // 将规则加载到流控manager中去
         FlowRuleManager.loadRules(rules);
     }
 
@@ -138,12 +146,15 @@ public class FlowQpsDemo {
                 try {
                     entry = SphU.entry(KEY);
                     // token acquired, means pass
+                    // 业务逻辑出，如果通过，pass  ++
                     pass.addAndGet(1);
                 } catch (BlockException e1) {
+                    // 抛出blockException   block ++
                     block.incrementAndGet();
                 } catch (Exception e2) {
                     // biz exception
                 } finally {
+                    // total ++
                     total.incrementAndGet();
                     if (entry != null) {
                         entry.exit();

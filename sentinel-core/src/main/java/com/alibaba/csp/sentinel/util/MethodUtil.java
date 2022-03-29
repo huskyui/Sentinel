@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MethodUtil {
 
+    // methodNameMap    k->v =>   Method->class.getName+method.getName+parameter.getClazz.getName
     private static final Map<Method, String> methodNameMap = new ConcurrentHashMap<Method, String>();
 
     private static final Object LOCK = new Object();
@@ -40,7 +41,9 @@ public final class MethodUtil {
         if (method == null) {
             throw new IllegalArgumentException("Null method");
         }
+        // methodNameMap作为本地缓存
         String methodName = methodNameMap.get(method);
+        // double_check形式
         if (methodName == null) {
             synchronized (LOCK) {
                 methodName = methodNameMap.get(method);

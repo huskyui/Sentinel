@@ -44,6 +44,7 @@ public final class SentinelConfigLoader {
 
     static {
         try {
+            // 初始化
             load();
         } catch (Throwable t) {
             RecordLog.warn("[SentinelConfigLoader] Failed to initialize configuration items", t);
@@ -52,6 +53,7 @@ public final class SentinelConfigLoader {
 
     private static void load() {
         // Order: system property -> system env -> default file (classpath:sentinel.properties) -> legacy path
+        // 顺序，系统变量，系统env，默认文件
         String fileName = System.getProperty(SENTINEL_CONFIG_PROPERTY_KEY);
         if (StringUtil.isBlank(fileName)) {
             fileName = System.getenv(SENTINEL_CONFIG_ENV_KEY);
@@ -60,12 +62,15 @@ public final class SentinelConfigLoader {
             }
         }
 
+        // 加载properties文件，将配置的数据，放到内存中的properties
         Properties p = ConfigUtil.loadProperties(fileName);
         if (p != null && !p.isEmpty()) {
             RecordLog.info("[SentinelConfigLoader] Loading Sentinel config from {}", fileName);
             properties.putAll(p);
         }
 
+        // 用copyOnWriteArraySet来防止System.getProperties.entrySet在遍历时，修改这个，导致ConcurrentModificationException
+        // 主要还是防止其他线程影响
         for (Map.Entry<Object, Object> entry : new CopyOnWriteArraySet<>(System.getProperties().entrySet())) {
             String configKey = entry.getKey().toString();
             String newConfigValue = entry.getValue().toString();

@@ -48,9 +48,12 @@ public class FlowThreadDemo {
         System.out.println(
             "MethodA will call methodB. After running for a while, methodB becomes fast, "
                 + "which make methodA also become fast ");
+        // 记录器
         tick();
+        // 初始化流控规则 methodA 设置为20个  并发线程数
         initFlowRule();
 
+        // 启动20个线程，刚开始，只有很少的task通过，后续 因为method2耗时缩小，1000/20ms*20thread ≈ 1000
         for (int i = 0; i < threadCount; i++) {
             Thread entryThread = new Thread(new Runnable() {
                 @Override

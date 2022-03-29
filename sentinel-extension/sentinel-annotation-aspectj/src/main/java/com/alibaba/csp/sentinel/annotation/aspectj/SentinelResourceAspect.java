@@ -48,11 +48,16 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
             // Should not go through here.
             throw new IllegalStateException("Wrong state for SentinelResource annotation");
         }
+        // 通过SentinelResource的value作为资源名，也可以使用originMethod的名字作为资源名
         String resourceName = getResourceName(annotation.value(), originMethod);
         EntryType entryType = annotation.entryType();
         int resourceType = annotation.resourceType();
         Entry entry = null;
+        // 执行aop方法，在执行方法前，调用SphU.entry
+        // 在后续捕获BlockException  (被阻塞)
+        // 捕获throwable
         try {
+            // entry
             entry = SphU.entry(resourceName, resourceType, entryType, pjp.getArgs());
             return pjp.proceed();
         } catch (BlockException ex) {
@@ -71,6 +76,7 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
             // No fallback function can handle the exception, so throw it out.
             throw ex;
         } finally {
+            // entry exit
             if (entry != null) {
                 entry.exit(1, pjp.getArgs());
             }
