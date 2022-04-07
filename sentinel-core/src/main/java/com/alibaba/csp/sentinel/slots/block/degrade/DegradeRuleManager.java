@@ -233,6 +233,7 @@ public final class DegradeRuleManager {
             RecordLog.info("[DegradeRuleManager] Degrade rules loaded: {}", ruleMap);
         }
 
+        // 聚合操作，通过resourceName聚合
         private Map<String, List<CircuitBreaker>> buildCircuitBreakers(List<DegradeRule> list) {
             Map<String, List<CircuitBreaker>> cbMap = new HashMap<>(8);
             if (list == null || list.isEmpty()) {

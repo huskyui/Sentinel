@@ -49,6 +49,7 @@ public class ExceptionRatioCircuitBreakerDemo {
     private static int seconds = 120;
 
     public static void main(String[] args) throws Exception {
+        // 初始化降级
         initDegradeRule();
         registerStateChangeObserver();
         startTick();
@@ -103,7 +104,9 @@ public class ExceptionRatioCircuitBreakerDemo {
 
     private static void initDegradeRule() {
         List<DegradeRule> rules = new ArrayList<>();
+        // resourceName
         DegradeRule rule = new DegradeRule(KEY)
+                // 错误阈值超过
             .setGrade(CircuitBreakerStrategy.ERROR_RATIO.getType())
             // Set ratio threshold to 50%.
             .setCount(0.5d)

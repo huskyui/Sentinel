@@ -39,12 +39,15 @@ public final class InitExecutor {
      * The initialization will be executed only once.
      */
     public static void doInit() {
+        // 多个并发加载时，只有一个可以加载成功   cas
         if (!initialized.compareAndSet(false, true)) {
             return;
         }
         try {
             List<InitFunc> initFuncs = SpiLoader.of(InitFunc.class).loadInstanceListSorted();
+            // 用orderWrapper来包裹 InitFunc
             List<OrderWrapper> initList = new ArrayList<OrderWrapper>();
+            // 这里为什么不是插入后，排序呢？？？
             for (InitFunc initFunc : initFuncs) {
                 RecordLog.info("[InitExecutor] Found init func: {}", initFunc.getClass().getCanonicalName());
                 insertSorted(initList, initFunc);
@@ -63,7 +66,9 @@ public final class InitExecutor {
         }
     }
 
+    // 根据order的大小进行插入到list中
     private static void insertSorted(List<OrderWrapper> list, InitFunc func) {
+        // 通过获取反射的类中的InitOrder的值来作为顺序
         int order = resolveOrder(func);
         int idx = 0;
         for (; idx < list.size(); idx++) {

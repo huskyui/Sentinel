@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * A simple SPI loading facility (refactored since 1.8.1).
  *
  * <p>SPI is short for Service Provider Interface.</p>
+ * <p> SPI is short for Service Provider Interface.</p>
  *
  * <p>
  * Service is represented by a single type, that is, a single interface or an abstract class.
@@ -45,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <p>
  * For Provider class:
+ * // 必须要有无参构造，是为了后续构造时，可以直接构造出来
  * Must have a zero-argument constructor so that they can be instantiated during loading.
  * </p>
  *
@@ -73,28 +75,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class SpiLoader<S> {
 
     // Default path for the folder of Provider configuration file
+    // 默认的Provider的文件夹的路径
     private static final String SPI_FILE_PREFIX = "META-INF/services/";
 
     // Cache the SpiLoader instances, key: classname of Service, value: SpiLoader instance
+    // 缓存spiLoader实例，key:service的clazzName   value : spiLoader 实例
     private static final ConcurrentHashMap<String, SpiLoader> SPI_LOADER_MAP = new ConcurrentHashMap<>();
 
-    // Cache the classes of Provider
+    // Cache the classes of Provider     加入了synchronized,list的大部分都被加入关键字，但是迭代相关没有加入
     private final List<Class<? extends S>> classList = Collections.synchronizedList(new ArrayList<Class<? extends S>>());
 
-    // Cache the sorted classes of Provider
+    // Cache the sorted classes of Provider  加入了synchronized,list的大部分都被加入关键字，但是迭代相关没有加入
     private final List<Class<? extends S>> sortedClassList = Collections.synchronizedList(new ArrayList<Class<? extends S>>());
 
     /**
      * Cache the classes of Provider, key: aliasName, value: class of Provider.
      * Note: aliasName is the value of {@link Spi} when the Provider class has {@link Spi} annotation and value is not empty,
-     * otherwise use classname of the Provider.
+     * otherwise use classname of the Provider.   如果用了注解SPI的，key就是对应的注解的值，否则用类名
      */
     private final ConcurrentHashMap<String, Class<? extends S>> classMap = new ConcurrentHashMap<>();
 
     // Cache the singleton instance of Provider, key: classname of Provider, value: Provider instance
+    // 单例map
     private final ConcurrentHashMap<String, S> singletonMap = new ConcurrentHashMap<>();
 
     // Whether this SpiLoader has been loaded, that is, loaded the Provider configuration file
+    // 标识这个spiLoader是否加载
     private final AtomicBoolean loaded = new AtomicBoolean(false);
 
     // Default provider class
@@ -113,6 +119,7 @@ public final class SpiLoader<S> {
      */
     public static <T> SpiLoader<T> of(Class<T> service) {
         AssertUtil.notNull(service, "SPI class cannot be null");
+        // 判断这个类是  接口 或者 抽象类
         AssertUtil.isTrue(service.isInterface() || Modifier.isAbstract(service.getModifiers()),
                 "SPI class[" + service.getName() + "] must be interface or abstract class");
 
@@ -311,11 +318,13 @@ public final class SpiLoader<S> {
      * Load the Provider class from Provider configuration file
      */
     public void load() {
+        // 防止初始化多次加载
         if (!loaded.compareAndSet(false, true)) {
             return;
         }
-
+        // 文件名
         String fullFileName = SPI_FILE_PREFIX + service.getName();
+        // 获取classloader
         ClassLoader classLoader;
         if (SentinelConfig.shouldUseContextClassloader()) {
             classLoader = Thread.currentThread().getContextClassLoader();
@@ -325,18 +334,20 @@ public final class SpiLoader<S> {
         if (classLoader == null) {
             classLoader = ClassLoader.getSystemClassLoader();
         }
+        // 获取fullFileName文件中的数据
         Enumeration<URL> urls = null;
         try {
             urls = classLoader.getResources(fullFileName);
         } catch (IOException e) {
             fail("Error locating SPI configuration file, filename=" + fullFileName + ", classloader=" + classLoader, e);
         }
-
+        // 如果不存在数据,记录warn日志
         if (urls == null || !urls.hasMoreElements()) {
             RecordLog.warn("No SPI configuration file, filename=" + fullFileName + ", classloader=" + classLoader);
             return;
         }
 
+        // 如果有多个元素
         while (urls.hasMoreElements()) {
             URL url = urls.nextElement();
 
@@ -347,21 +358,25 @@ public final class SpiLoader<S> {
                 br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
                 String line;
                 while ((line = br.readLine()) != null) {
+                    // 如果文件是空line skip
                     if (StringUtil.isBlank(line)) {
                         // Skip blank line
                         continue;
                     }
 
+                    // trim line
                     line = line.trim();
+                    // 如果配置文件是开始是#，则skip line
                     int commentIndex = line.indexOf("#");
                     if (commentIndex == 0) {
                         // Skip comment line
                         continue;
                     }
-
+                    // 如果截取的是#是大于的，substring
                     if (commentIndex > 0) {
                         line = line.substring(0, commentIndex);
                     }
+                    // trim
                     line = line.trim();
 
                     Class<S> clazz = null;
@@ -370,19 +385,24 @@ public final class SpiLoader<S> {
                     } catch (ClassNotFoundException e) {
                         fail("class " + line + " not found", e);
                     }
-
+                    // 判断clazz是否是service的超类
                     if (!service.isAssignableFrom(clazz)) {
                         fail("class " + clazz.getName() + "is not subtype of " + service.getName() + ",SPI configuration file=" + fullFileName);
                     }
 
+                    // add clazz
                     classList.add(clazz);
+                    // 如果clazz上有Spi.class注解
                     Spi spi = clazz.getAnnotation(Spi.class);
+
                     String aliasName = spi == null || "".equals(spi.value()) ? clazz.getName() : spi.value();
+                    // 存在重复数据，报错
                     if (classMap.containsKey(aliasName)) {
                         Class<? extends S> existClass = classMap.get(aliasName);
                         fail("Found repeat alias name for " + clazz.getName() + " and "
                                 + existClass.getName() + ",SPI configuration file=" + fullFileName);
                     }
+                    // 添加aliasName,clazz
                     classMap.put(aliasName, clazz);
 
                     if (spi != null && spi.isDefault()) {
@@ -407,6 +427,7 @@ public final class SpiLoader<S> {
         }
 
         sortedClassList.addAll(classList);
+        // 排序，如果出现Spi注解不存在，为0默认值
         Collections.sort(sortedClassList, new Comparator<Class<? extends S>>() {
             @Override
             public int compare(Class<? extends S> o1, Class<? extends S> o2) {
@@ -433,12 +454,15 @@ public final class SpiLoader<S> {
      * @return Provider instance list
      */
     private List<S> createInstanceList(List<Class<? extends S>> clazzList) {
+        // 如果clazzList是空的，返回Collections.emptyList();
         if (clazzList == null || clazzList.size() == 0) {
             return Collections.emptyList();
         }
 
+        // 初始化instances列表容量
         List<S> instances = new ArrayList<>(clazzList.size());
         for (Class<? extends S> clazz : clazzList) {
+            // 创建实例
             S instance = createInstance(clazz);
             instances.add(instance);
         }
@@ -452,11 +476,14 @@ public final class SpiLoader<S> {
      * @return Provider class
      */
     private S createInstance(Class<? extends S> clazz) {
+        // 获取Spi注解
         Spi spi = clazz.getAnnotation(Spi.class);
         boolean singleton = true;
+        // 判断是否是单例
         if (spi != null) {
             singleton = spi.isSingleton();
         }
+        // 创建实例
         return createInstance(clazz, singleton);
     }
 
@@ -470,7 +497,9 @@ public final class SpiLoader<S> {
     private S createInstance(Class<? extends S> clazz, boolean singleton) {
         S instance = null;
         try {
+            // 如果是单例
             if (singleton) {
+                // 下面是double checked of a map的实现
                 instance = singletonMap.get(clazz.getName());
                 if (instance == null) {
                     synchronized (this) {
@@ -482,6 +511,7 @@ public final class SpiLoader<S> {
                     }
                 }
             } else {
+                // 不是单例，那么每次都创建一个对象
                 instance = service.cast(clazz.newInstance());
             }
         } catch (Throwable e) {
@@ -495,12 +525,14 @@ public final class SpiLoader<S> {
      *
      * @param closeables {@link Closeable} resources
      */
+    // 实现接口，参数入参多个，可以关闭多个resources
     private void closeResources(Closeable... closeables) {
         if (closeables == null || closeables.length == 0) {
             return;
         }
 
         Exception firstException = null;
+        // 很多对象都实现了closeable接口，我们直接来实现他的
         for (Closeable closeable : closeables) {
             try {
                 closeable.close();

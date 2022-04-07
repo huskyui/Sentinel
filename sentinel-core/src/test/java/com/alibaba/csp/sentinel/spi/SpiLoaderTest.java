@@ -63,6 +63,7 @@ public class SpiLoaderTest {
         SpiLoader slotLoader2 = SpiLoader.of(ProcessorSlot.class);
         assertNotNull(slotLoader2);
 
+        // 是放在一个private static ConcurrentHashMap中的，key是className,所以是相同的
         assertSame(slotLoader1, slotLoader2);
 
         SpiLoader initFuncLoader1 = SpiLoader.of(InitFunc.class);
@@ -79,6 +80,7 @@ public class SpiLoaderTest {
     @Test
     public void testCreateSpiLoaderNotInterface() {
         try {
+            // MUST BE interface or abstract class
             SpiLoader.of(SphU.class);
             fail();
         } catch (Exception e) {
@@ -92,6 +94,7 @@ public class SpiLoaderTest {
         SpiLoader spiLoader = SpiLoader.of(ProcessorSlot.class);
         List<ProcessorSlot> slots1 = spiLoader.loadInstanceList();
         List<ProcessorSlot> slots2 = spiLoader.loadInstanceList();
+        // 其中有几个不是singleton
         assertNotSame(slots1, slots2);
 
         List<Class<? extends ProcessorSlot>> prototypeSlotClasses = new ArrayList<>(2);

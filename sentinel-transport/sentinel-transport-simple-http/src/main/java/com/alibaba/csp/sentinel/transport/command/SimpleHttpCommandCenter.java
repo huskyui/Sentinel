@@ -53,13 +53,17 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     private static final int DEFAULT_PORT = 8719;
 
     @SuppressWarnings("rawtypes")
-    private static final Map<String, CommandHandler> handlerMap = new ConcurrentHashMap<String, CommandHandler>();
+    // handlerMap  中 k,v 分别对应   string 和对应的CommandHandler接口的实现类 ，但是CommandHandler是接口,且支持泛型，我们需要使用@SuppressWarnings来阻止我们直接使用CommandHandler，没有指定类型
+    private static final Map<String, CommandHandler> handlerMap = new ConcurrentHashMap<>();
 
     @SuppressWarnings("PMD.ThreadPoolCreationRule")
+    // 不推荐直接创建，但是这个单线程的，还是创建了
     private ExecutorService executor = Executors.newSingleThreadExecutor(
         new NamedThreadFactory("sentinel-command-center-executor", true));
+    // 后面会创建
     private ExecutorService bizExecutor;
 
+    // fixme 不知道有什么用
     private ServerSocket socketReference;
 
     @Override

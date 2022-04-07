@@ -63,6 +63,7 @@ public final class SentinelConfigLoader {
         }
 
         // 加载properties文件，将配置的数据，放到内存中的properties
+        // Properties 底层使用 HashTable
         Properties p = ConfigUtil.loadProperties(fileName);
         if (p != null && !p.isEmpty()) {
             RecordLog.info("[SentinelConfigLoader] Loading Sentinel config from {}", fileName);
@@ -70,7 +71,7 @@ public final class SentinelConfigLoader {
         }
 
         // 用copyOnWriteArraySet来防止System.getProperties.entrySet在遍历时，修改这个，导致ConcurrentModificationException
-        // 主要还是防止其他线程影响
+        // 主要还是防止其他线程影响  ,cow
         for (Map.Entry<Object, Object> entry : new CopyOnWriteArraySet<>(System.getProperties().entrySet())) {
             String configKey = entry.getKey().toString();
             String newConfigValue = entry.getValue().toString();
