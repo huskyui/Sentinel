@@ -57,6 +57,7 @@ public class ContextTest {
         }
     }
 
+    // 初始化时，会有一个default context
     @Test
     public void testDefaultContextWhenExceedsThreshold() {
         fillContext();
@@ -71,6 +72,7 @@ public class ContextTest {
         }
     }
 
+    // fill context to the threadLocal
     private void fillContext() {
         for (int i = 0; i < Constants.MAX_CONTEXT_NAME_SIZE; i++) {
             ContextUtil.enter("test-context-" + i);

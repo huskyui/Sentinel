@@ -45,6 +45,7 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
 public class ContextUtil {
 
     /**
+     * threadLocal
      * Store the context in ThreadLocal for easy access.
      */
     private static ThreadLocal<Context> contextHolder = new ThreadLocal<>();
@@ -52,9 +53,12 @@ public class ContextUtil {
     /**
      * Holds all {@link EntranceNode}. Each {@link EntranceNode} is associated with a distinct context name.
      */
+    // 用的是private static volatile 修饰的 hashMap
     private static volatile Map<String, DefaultNode> contextNameNodeMap = new HashMap<>();
 
+    // lock 还不知道它的用处
     private static final ReentrantLock LOCK = new ReentrantLock();
+    // 不知道干嘛用的
     private static final Context NULL_CONTEXT = new NullContext();
 
     static {
@@ -63,8 +67,11 @@ public class ContextUtil {
     }
 
     private static void initDefaultContext() {
+        // sentinel 默认的context的名称
         String defaultContextName = Constants.CONTEXT_DEFAULT_NAME;
+        // entranceNode代表调用树的入口
         EntranceNode node = new EntranceNode(new StringResourceWrapper(defaultContextName, EntryType.IN), null);
+        // add child是在DefaultNode中的一个set的node
         Constants.ROOT.addChild(node);
         contextNameNodeMap.put(defaultContextName, node);
     }
@@ -109,6 +116,7 @@ public class ContextUtil {
      *               invoker/consumer separately.
      * @return The invocation context of the current thread
      */
+    // 来源很中重要，我们可以区分不同来源，然后进行根据不同origin来做对应的处理
     public static Context enter(String name, String origin) {
         if (Constants.CONTEXT_DEFAULT_NAME.equals(name)) {
             throw new ContextNameDefineException(
@@ -123,14 +131,17 @@ public class ContextUtil {
             Map<String, DefaultNode> localCacheNameMap = contextNameNodeMap;
             DefaultNode node = localCacheNameMap.get(name);
             if (node == null) {
+                // 超过2000个，
                 if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                     setNullContext();
                     return NULL_CONTEXT;
                 } else {
+                    // 加锁
                     LOCK.lock();
                     try {
                         node = contextNameNodeMap.get(name);
                         if (node == null) {
+                            // 同上
                             if (contextNameNodeMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                                 setNullContext();
                                 return NULL_CONTEXT;
@@ -138,14 +149,15 @@ public class ContextUtil {
                                 node = new EntranceNode(new StringResourceWrapper(name, EntryType.IN), null);
                                 // Add entrance node.
                                 Constants.ROOT.addChild(node);
-
                                 Map<String, DefaultNode> newMap = new HashMap<>(contextNameNodeMap.size() + 1);
+                                // cow 的策略，反正在写时影响其他线程
                                 newMap.putAll(contextNameNodeMap);
                                 newMap.put(name, node);
                                 contextNameNodeMap = newMap;
                             }
                         }
                     } finally {
+                        // unlock
                         LOCK.unlock();
                     }
                 }

@@ -57,22 +57,23 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
 public class Context {
 
     /**
-     * Context name.
+     * Context name. context名称
      */
     private final String name;
 
     /**
-     * The entrance node of current invocation tree.
+     * The entrance node of current invocation tree.   当前调用链的入口节点
      */
     private DefaultNode entranceNode;
 
     /**
-     * Current processing entry.
+     * Current processing entry.  当前处理的条目
      */
     private Entry curEntry;
 
     /**
      * The origin of this context (usually indicate different invokers, e.g. service consumer name or origin IP).
+     * // 举例  服务消费者名称  或者 源ip
      */
     private String origin = "";
 
@@ -86,10 +87,16 @@ public class Context {
      * @return the new created context
      * @since 0.2.0
      */
+    // 新建异步context
     public static Context newAsyncContext(DefaultNode entranceNode, String name) {
         return new Context(name, entranceNode, true);
     }
 
+    /**
+     * 新建context
+     * @param entranceNode
+     * @param name
+     */
     public Context(DefaultNode entranceNode, String name) {
         this(name, entranceNode, false);
     }
