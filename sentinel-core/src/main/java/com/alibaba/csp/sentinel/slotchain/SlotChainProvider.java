@@ -40,6 +40,7 @@ public final class SlotChainProvider {
             return slotChainBuilder.build();
         }
 
+        // 通过配置文件，load slotChainBuilder接口的实现。load first Instance or Default
         // Resolve the slot chain builder SPI.
         slotChainBuilder = SpiLoader.of(SlotChainBuilder.class).loadFirstInstanceOrDefault();
 

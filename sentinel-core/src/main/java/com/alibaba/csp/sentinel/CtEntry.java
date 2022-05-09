@@ -27,7 +27,7 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 import com.alibaba.csp.sentinel.util.function.BiConsumer;
 
 /**
- * Linked entry within current context.
+ * Linked entry within current context. 当前上下文的链接条目
  *
  * @author jialiang.linjl
  * @author Eric Zhao
@@ -54,6 +54,7 @@ class CtEntry extends Entry {
         if (context instanceof NullContext) {
             return;
         }
+        // 下面这些主要是为了链路来处理的，父子结构处理好
         this.parent = context.getCurEntry();
         if (parent != null) {
             ((CtEntry) parent).child = this;

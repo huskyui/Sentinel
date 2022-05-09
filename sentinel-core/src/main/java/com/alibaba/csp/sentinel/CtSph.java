@@ -45,6 +45,7 @@ public class CtSph implements Sph {
     private static final Object[] OBJECTS0 = new Object[0];
 
     /**
+     * // 如果ResourceWrapper相同时，会使用同一个ProcessorSlotChain. 不论在那个上文中的。说到底就是一个全局变量
      * Same resource({@link ResourceWrapper#equals(Object)}) will share the same
      * {@link ProcessorSlotChain}, no matter in which {@link Context}.
      */
@@ -116,23 +117,29 @@ public class CtSph implements Sph {
 
     private Entry entryWithPriority(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args)
         throws BlockException {
+        // 获取上下文
         Context context = ContextUtil.getContext();
+        // nullContext表明context数量已经超过阈值，所以这里只是  init条目，没有规则会被校验
         if (context instanceof NullContext) {
             // The {@link NullContext} indicates that the amount of context has exceeded the threshold,
             // so here init the entry only. No rule checking will be done.
             return new CtEntry(resourceWrapper, null, context);
         }
 
+        //
         if (context == null) {
             // Using default context.
+            // 新建context
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
         // Global switch is close, no rule checking will do.
+        // 如果关闭sentinel,我们会关闭所以的校验。    就是一个开关
         if (!Constants.ON) {
             return new CtEntry(resourceWrapper, null, context);
         }
 
+        // get chain，找不到就新建一个slotChain.基于spi加载文件中的一系列的slot，并加载到内存中
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         /*
@@ -143,8 +150,10 @@ public class CtSph implements Sph {
             return new CtEntry(resourceWrapper, null, context);
         }
 
+
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try {
+            // 执行DefaultSlotChain的entry方法
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
         } catch (BlockException e1) {
             e.exit(count, args);
@@ -157,14 +166,15 @@ public class CtSph implements Sph {
     }
 
     /**
-     * Do all {@link Rule}s checking about the resource.
+     * Do all {@link Rule}s checking about the resource.  // 执行对该资源的check
      *
      * <p>Each distinct resource will use a {@link ProcessorSlot} to do rules checking. Same resource will use
-     * same {@link ProcessorSlot} globally. </p>
+     * same {@link ProcessorSlot} globally. </p>   每个单独的资源都会使用ProcessorSlot来做规则校验，相同的资源将会
      *
      * <p>Note that total {@link ProcessorSlot} count must not exceed {@link Constants#MAX_SLOT_CHAIN_SIZE},
      * otherwise no rules checking will do. In this condition, all requests will pass directly, with no checking
      * or exception.</p>
+     * 注意在超过MAX_SLOT_CHAIN_SIZE，这种情况所有请求都会通过，不会做校验.
      *
      * @param resourceWrapper resource name
      * @param count           tokens needed
@@ -194,15 +204,19 @@ public class CtSph implements Sph {
     ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper) {
         ProcessorSlotChain chain = chainMap.get(resourceWrapper);
         if (chain == null) {
+            // static修饰的LOCK,全局只有一个
             synchronized (LOCK) {
                 chain = chainMap.get(resourceWrapper);
                 if (chain == null) {
                     // Entry size limit.
+                    // 保证这个chainMap不太多
                     if (chainMap.size() >= Constants.MAX_SLOT_CHAIN_SIZE) {
                         return null;
                     }
 
+                    // 新建chain
                     chain = SlotChainProvider.newSlotChain();
+                    // map的cow写法
                     Map<ResourceWrapper, ProcessorSlotChain> newMap = new HashMap<ResourceWrapper, ProcessorSlotChain>(
                         chainMap.size() + 1);
                     newMap.putAll(chainMap);

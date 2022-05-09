@@ -36,6 +36,7 @@ final class AuthorityRuleChecker {
         }
 
         // Do exact match with origin name.
+        // 通过indexOf判断字符串中是否存在origin
         int pos = rule.getLimitApp().indexOf(requester);
         boolean contain = pos > -1;
 

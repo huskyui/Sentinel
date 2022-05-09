@@ -66,7 +66,7 @@ public final class Constants {
     public final static ClusterNode ENTRY_NODE = new ClusterNode(TOTAL_IN_RESOURCE_NAME, ResourceTypeConstants.COMMON);
 
     /**
-     * The global switch for Sentinel.
+     * The global switch for Sentinel.  // 可以通过 http请求实现对值的修改
      */
     public static volatile boolean ON = true;
 

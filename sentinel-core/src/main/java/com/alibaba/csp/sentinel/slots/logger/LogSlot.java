@@ -37,6 +37,7 @@ public class LogSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         try {
             fireEntry(context, resourceWrapper, obj, count, prioritized, args);
         } catch (BlockException e) {
+            // 出现异常记录日志
             EagleEyeLogUtil.log(resourceWrapper.getName(), e.getClass().getSimpleName(), e.getRuleLimitApp(),
                 context.getOrigin(), count);
             throw e;

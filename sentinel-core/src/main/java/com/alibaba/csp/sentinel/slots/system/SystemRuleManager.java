@@ -292,6 +292,7 @@ public final class SystemRuleManager {
             return;
         }
         // Ensure the checking switch is on.
+        // 通过配置文件相关的
         if (!checkSystemStatus.get()) {
             return;
         }
@@ -319,6 +320,7 @@ public final class SystemRuleManager {
         }
 
         // load. BBR algorithm.
+        // todo 看一下这个
         if (highestSystemLoadIsSet && getCurrentSystemAvgLoad() > highestSystemLoad) {
             if (!checkBbr(currentThread)) {
                 throw new SystemBlockException(resourceWrapper.getName(), "load");
@@ -326,6 +328,7 @@ public final class SystemRuleManager {
         }
 
         // cpu usage
+        // todo here 看一下这个
         if (highestCpuUsageIsSet && getCurrentCpuUsage() > highestCpuUsage) {
             throw new SystemBlockException(resourceWrapper.getName(), "cpu");
         }

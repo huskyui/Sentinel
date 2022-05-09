@@ -39,6 +39,8 @@ public class DefaultSlotChainBuilder implements SlotChainBuilder {
     public ProcessorSlotChain build() {
         ProcessorSlotChain chain = new DefaultProcessorSlotChain();
 
+        // 根据配置文件中找出ProcessSlot接口的实现，并加载.
+        // 这里返回的是sorted list
         List<ProcessorSlot> sortedSlotList = SpiLoader.of(ProcessorSlot.class).loadInstanceListSorted();
         for (ProcessorSlot slot : sortedSlotList) {
             if (!(slot instanceof AbstractLinkedProcessorSlot)) {
@@ -46,6 +48,7 @@ public class DefaultSlotChainBuilder implements SlotChainBuilder {
                 continue;
             }
 
+            // chain add slot
             chain.addLast((AbstractLinkedProcessorSlot<?>) slot);
         }
 

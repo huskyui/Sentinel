@@ -65,6 +65,7 @@ public final class AuthorityRuleManager {
      *
      * @param rules list of authority rules
      */
+    // 加载授权规则到内存
     public static void loadRules(List<AuthorityRule> rules) {
         currentProperty.updateValue(rules);
     }

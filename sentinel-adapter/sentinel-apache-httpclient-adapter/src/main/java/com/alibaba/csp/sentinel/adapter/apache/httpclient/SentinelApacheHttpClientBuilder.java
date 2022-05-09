@@ -33,6 +33,7 @@ import java.io.IOException;
 /**
  * @author zhaoyuguang
  */
+// 通过继承HttpClientBuilder，来实现config的存储
 public class SentinelApacheHttpClientBuilder extends HttpClientBuilder {
 
     private final SentinelApacheHttpClientConfig config;

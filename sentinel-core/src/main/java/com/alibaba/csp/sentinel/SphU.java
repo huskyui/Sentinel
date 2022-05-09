@@ -76,11 +76,13 @@ public class SphU {
 
     /**
      * Record statistics and perform rule checking for the given resource.
+     * // 记录统计数据 并且 给指定资源执行规则检查
      *
      * @param name the unique name of the protected resource
      * @return the {@link Entry} of this invocation (used for mark the invocation complete and get context data)
      * @throws BlockException if the block criteria is met (e.g. metric exceeded the threshold of any rules)
      */
+    // 保护资源的唯一名称
     public static Entry entry(String name) throws BlockException {
         return Env.sph.entry(name, EntryType.OUT, 1, OBJECTS0);
     }

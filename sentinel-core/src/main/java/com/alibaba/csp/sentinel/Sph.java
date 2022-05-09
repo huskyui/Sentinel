@@ -124,9 +124,9 @@ public interface Sph extends SphResourceTypeSupport {
      * @param method      the protected method
      * @param trafficType the traffic type (inbound, outbound or internal). This is used
      *                    to mark whether it can be blocked when the system is unstable,
-     *                    only inbound traffic could be blocked by {@link SystemRule}
+     *                    only inbound traffic could be blocked by {@link SystemRule}    在系统不稳定时，只有入站的流量才会被 blocked
      * @param batchCount  the amount of calls within the invocation (e.g. batchCount=2 means request for 2 tokens)
-     * @param args        parameters of the method for flow control or customized slots
+     * @param args        parameters of the method for flow control or customized slots   自定义参数
      * @return the {@link Entry} of this invocation (used for mark the invocation complete and get context data).
      * @throws BlockException if the block criteria is met
      */

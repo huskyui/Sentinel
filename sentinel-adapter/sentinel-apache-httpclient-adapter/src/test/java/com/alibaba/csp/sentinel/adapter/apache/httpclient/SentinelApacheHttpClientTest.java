@@ -61,6 +61,7 @@ public class SentinelApacheHttpClientTest {
         HttpGet httpGet = new HttpGet("http://localhost:" + port + "/httpclient/back");
         System.out.println(getRemoteString(httpclient, httpGet));
         ClusterNode cn = ClusterBuilderSlot.getClusterNode("httpclient:/httpclient/back");
+        System.out.println(cn);
         assertNotNull(cn);
         Constants.ROOT.removeChildList();
         ClusterBuilderSlot.getClusterNodeMap().clear();
