@@ -89,12 +89,14 @@ public final class SystemRuleManager {
     private static SentinelProperty<List<SystemRule>> currentProperty = new DynamicSentinelProperty<List<SystemRule>>();
 
     @SuppressWarnings("PMD.ThreadPoolCreationRule")
+    // 定时调度的线程池
     private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1,
         new NamedThreadFactory("sentinel-system-status-record-task", true));
 
     static {
         checkSystemStatus.set(false);
         statusListener = new SystemStatusListener();
+        // 1秒运行一次
         scheduler.scheduleAtFixedRate(statusListener, 0, 1, TimeUnit.SECONDS);
         currentProperty.addListener(listener);
     }
@@ -184,6 +186,7 @@ public final class SystemRuleManager {
 
         @Override
         public synchronized void configUpdate(List<SystemRule> rules) {
+            // config update
             restoreSetting();
             // systemRules = rules;
             if (rules != null && rules.size() >= 1) {

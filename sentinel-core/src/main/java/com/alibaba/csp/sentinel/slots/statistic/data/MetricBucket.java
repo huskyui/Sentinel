@@ -59,6 +59,7 @@ public class MetricBucket {
      * @return new metric bucket in initial state
      */
     public MetricBucket reset() {
+        // 给counter数组中的每一个的LongAdder执行，有很多类型，见MetricEvent这个枚举
         for (MetricEvent event : MetricEvent.values()) {
             counters[event.ordinal()].reset();
         }

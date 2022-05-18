@@ -59,7 +59,9 @@ public class FlowRuleManager {
         new NamedThreadFactory("sentinel-metrics-record-task", true));
 
     static {
+        // 添加监听器
         currentProperty.addListener(LISTENER);
+        // 开启一个线程
         startMetricTimerListener();
     }
 

@@ -114,12 +114,15 @@ public abstract class LeapArray<T> {
      * @return current bucket item at provided timestamp if the time is valid; null if time is invalid
      */
     public WindowWrap<T> currentWindow(long timeMillis) {
+        // 当前时间不可能小于0
         if (timeMillis < 0) {
             return null;
         }
 
+        // 通过区域来实现
         int idx = calculateTimeIdx(timeMillis);
         // Calculate current bucket start time.
+        // 获取当前时间的bucket的start time
         long windowStart = calculateWindowStart(timeMillis);
 
         /*
@@ -131,6 +134,7 @@ public abstract class LeapArray<T> {
          */
         while (true) {
             WindowWrap<T> old = array.get(idx);
+            // 如果是刚开始，可能这些array的idx == null.
             if (old == null) {
                 /*
                  *     B0       B1      B2    NULL      B4
@@ -145,14 +149,16 @@ public abstract class LeapArray<T> {
                  * succeed to update, while other threads yield its time slice.
                  */
                 WindowWrap<T> window = new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
+                // 给idx 赋值，通过cas赋值,如果成功就返回
                 if (array.compareAndSet(idx, null, window)) {
                     // Successfully updated, return the created bucket.
+
                     return window;
                 } else {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart == old.windowStart()) {
+            } else if (windowStart == old.windowStart()) {// 如果获取的bucket的开始时间和计算的应该的bucket的时间相同，确认bucket就是当前的bucket
                 /*
                  *     B0       B1      B2     B3      B4
                  * ||_______|_______|_______|_______|_______||___
@@ -166,6 +172,7 @@ public abstract class LeapArray<T> {
                  */
                 return old;
             } else if (windowStart > old.windowStart()) {
+                // 如果是应该的bucket startTime > 获取的当前的bucket的startTime  ,则说明，当前bucket没有更新
                 /*
                  *   (old)
                  *             B0       B1      B2    NULL      B4
@@ -194,7 +201,8 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart < old.windowStart()) {
+
+            } else if (windowStart < old.windowStart()) {// 应该不存在
                 // Should not go through here, as the provided time is already behind.
                 return new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
             }

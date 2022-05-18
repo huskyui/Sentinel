@@ -92,11 +92,13 @@ public class StatisticNode implements Node {
     /**
      * Holds statistics of the recent {@code INTERVAL} milliseconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
+     * 保存最近 INTERVAL 毫秒的统计信息。 INTERVAL 按给定的 sampleCount 划分为时间跨度
      */
     private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
         IntervalProperty.INTERVAL);
 
     /**
+     *
      * Holds statistics of the recent 60 seconds. The windowLengthInMs is deliberately set to 1000 milliseconds,
      * meaning each bucket per second, in this way we can get accurate statistics of each second.
      */
@@ -244,7 +246,9 @@ public class StatisticNode implements Node {
 
     @Override
     public void addPassRequest(int count) {
+        // 秒级，通过LeapArray定位到  currentWindow的metricBucket里面，给metricBucket的下标MetricEvent.pass += count
         rollingCounterInSecond.addPass(count);
+        // 分钟级
         rollingCounterInMinute.addPass(count);
     }
 

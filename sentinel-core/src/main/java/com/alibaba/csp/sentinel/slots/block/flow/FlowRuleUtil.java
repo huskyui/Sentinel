@@ -89,6 +89,7 @@ public final class FlowRuleUtil {
         Map<K, Set<FlowRule>> tmpMap = new ConcurrentHashMap<>();
 
         for (FlowRule rule : list) {
+            // CHECK rule valid
             if (!isValidRule(rule)) {
                 RecordLog.warn("[FlowRuleManager] Ignoring invalid flow rule when loading new flow rules: " + rule);
                 continue;
@@ -130,7 +131,9 @@ public final class FlowRuleUtil {
     }
 
     private static TrafficShapingController generateRater(/*@Valid*/ FlowRule rule) {
+        // 如果阈值类型是qps
         if (rule.getGrade() == RuleConstant.FLOW_GRADE_QPS) {
+            // 选择
             switch (rule.getControlBehavior()) {
                 case RuleConstant.CONTROL_BEHAVIOR_WARM_UP:
                     return new WarmUpController(rule.getCount(), rule.getWarmUpPeriodSec(),

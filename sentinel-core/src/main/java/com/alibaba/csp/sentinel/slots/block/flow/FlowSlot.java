@@ -168,6 +168,7 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
     void checkFlow(ResourceWrapper resource, Context context, DefaultNode node, int count, boolean prioritized)
         throws BlockException {
+        // 流控校验
         checker.checkFlow(ruleProvider, resource, context, node, count, prioritized);
     }
 
