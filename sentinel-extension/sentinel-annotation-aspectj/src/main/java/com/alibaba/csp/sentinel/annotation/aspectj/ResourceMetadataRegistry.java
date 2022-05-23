@@ -41,6 +41,7 @@ final class ResourceMetadataRegistry {
     }
 
     static MethodWrapper lookupBlockHandler(Class<?> clazz, String name) {
+        // clazzName和methodName合并成一个字符串作为map的一个key
         return BLOCK_HANDLER_MAP.get(getKey(clazz, name));
     }
 
@@ -62,6 +63,7 @@ final class ResourceMetadataRegistry {
         if (clazz == null || StringUtil.isBlank(name)) {
             throw new IllegalArgumentException("Bad argument");
         }
+        // 对方法的缓存                              // 对方法的一个包装
         BLOCK_HANDLER_MAP.put(getKey(clazz, name), MethodWrapper.wrap(method));
     }
 

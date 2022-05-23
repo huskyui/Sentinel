@@ -126,6 +126,7 @@ public abstract class AbstractSentinelAspectSupport {
         throws Throwable {
 
         // Execute block handler if configured.
+        // 如果出现了fallback的方法，我们就去执行并返回
         Method blockHandlerMethod = extractBlockHandlerMethod(pjp, annotation.blockHandler(),
             annotation.blockHandlerClass());
         if (blockHandlerMethod != null) {
@@ -133,6 +134,7 @@ public abstract class AbstractSentinelAspectSupport {
             // Construct args.
             Object[] args = Arrays.copyOf(originArgs, originArgs.length + 1);
             args[args.length - 1] = ex;
+            // 调用方法
             return invoke(pjp, blockHandlerMethod, args);
         }
 
@@ -145,9 +147,11 @@ public abstract class AbstractSentinelAspectSupport {
             if (!method.isAccessible()) {
                 makeAccessible(method);
             }
+            // 如果是静态变量，method调用 invoke
             if (isStatic(method)) {
                 return method.invoke(null, args);
             }
+            // 不是太理解。上下有什么区别
             return method.invoke(pjp.getTarget(), args);
         } catch (InvocationTargetException e) {
             // throw the actual exception
@@ -253,22 +257,32 @@ public abstract class AbstractSentinelAspectSupport {
             return null;
         }
 
+        // 如果配置了fallbackClass的地址，我们就要判断这个fallback
         boolean mustStatic = locationClass != null && locationClass.length >= 1;
         Class<?> clazz;
+
+        // 配置了fallbackClass，就去寻找fallbackClass
         if (mustStatic) {
             clazz = locationClass[0];
         } else {
+            // 没有配置，默认使用pjp的class
             // By default current class.
             clazz = pjp.getTarget().getClass();
         }
+
+        // 主要是缓存方法的实例
         MethodWrapper m = ResourceMetadataRegistry.lookupBlockHandler(clazz, name);
+        // 刚开始肯定没有
         if (m == null) {
             // First time, resolve the block handler.
+            // 找到对应的方法
             Method method = resolveBlockHandlerInternal(pjp, name, clazz, mustStatic);
             // Cache the method instance.
+            // 缓存实例，将获取的值放入到缓存中
             ResourceMetadataRegistry.updateBlockHandlerFor(clazz, name, method);
             return method;
         }
+        // 如果这个method 不存在，返回null
         if (!m.isPresent()) {
             return null;
         }
@@ -279,6 +293,7 @@ public abstract class AbstractSentinelAspectSupport {
                                                boolean mustStatic) {
         Method originMethod = resolveMethod(pjp);
         Class<?>[] originList = originMethod.getParameterTypes();
+        // copy array. 并且在 array最后面添加BlockException.class
         Class<?>[] parameterTypes = Arrays.copyOf(originList, originList.length + 1);
         parameterTypes[parameterTypes.length - 1] = BlockException.class;
         return findMethod(mustStatic, clazz, name, originMethod.getReturnType(), parameterTypes);
@@ -292,8 +307,11 @@ public abstract class AbstractSentinelAspectSupport {
                               Class<?>... parameterTypes) {
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
+            // 方法名相同 且 方法是静态方法 且
             if (name.equals(method.getName()) && checkStatic(mustStatic, method)
+                    // 返回值类型相同
                 && returnType.isAssignableFrom(method.getReturnType())
+                    // 参数类型列表相同
                 && Arrays.equals(parameterTypes, method.getParameterTypes())) {
 
                 RecordLog.info("Resolved method [{}] in class [{}]", name, clazz.getCanonicalName());
