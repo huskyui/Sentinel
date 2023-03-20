@@ -39,12 +39,11 @@ public class LogSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         } catch (BlockException e) {
             // 出现异常记录日志
             EagleEyeLogUtil.log(resourceWrapper.getName(), e.getClass().getSimpleName(), e.getRuleLimitApp(),
-                context.getOrigin(), count);
+                context.getOrigin(), e.getRule() != null ? e.getRule().getId() : null, count);
             throw e;
         } catch (Throwable e) {
             RecordLog.warn("Unexpected entry exception", e);
         }
-
     }
 
     @Override
